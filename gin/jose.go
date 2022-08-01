@@ -139,7 +139,7 @@ func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, r
 					logger.Error(logPrefix, strings.Join(request, "\n"), "Unable to validate the token:", err.Error())
 				}
 				response := RequestToSignIn(logger)
-				c.AbortWithStatusJSON(http.StatusSeeOther, response)
+				c.AbortWithStatusJSON(http.StatusSeeOther, response.Body)
 				//c.AbortWithStatus(http.StatusUnauthorized)
 				return
 			}
