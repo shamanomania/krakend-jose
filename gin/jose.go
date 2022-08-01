@@ -245,7 +245,7 @@ func FromCookie(key string) func(r *http.Request) (*jwt.JSONWebToken, error) {
 }
 
 func RequestToSignIn(logger logging.Logger) *http.Response {
-	const serverAddr = "https://google.com"
+	const serverAddr = "https://swapi.dev/api/people/1"
 
 	requestToBakend, err := http.NewRequest(http.MethodGet, serverAddr, nil)
 	if err != nil {
