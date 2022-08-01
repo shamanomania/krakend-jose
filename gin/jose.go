@@ -129,7 +129,7 @@ func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, r
 			token, err := validator.ValidateRequest(c.Request)
 			if err != nil {
 				if scfg.OperationDebug {
-					logger.Error(logPrefix, "Unable to validate the token:", err.Error())
+					logger.Error(logPrefix, "Unable to validate the token CUSTOM!!!!!!!!!!!:", err.Error())
 				}
 				c.AbortWithStatus(http.StatusUnauthorized)
 				return
