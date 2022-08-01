@@ -70,7 +70,7 @@ func TokenSigner(hf ginlura.HandlerFactory, logger logging.Logger) ginlura.Handl
 
 func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, rejecterF krakendjose.RejecterFactory) ginlura.HandlerFactory {
 	return func(cfg *config.EndpointConfig, prxy proxy.Proxy) gin.HandlerFunc {
-		logPrefix := "[ENDPOINT: " + cfg.Endpoint + "][JWTValidator]"
+		logPrefix := "[ENDPOINT: " + cfg.Endpoint + "METHOD: " + cfg.Method + "][JWTValidator]"
 		if rejecterF == nil {
 			rejecterF = new(krakendjose.NopRejecterFactory)
 		}
@@ -129,9 +129,18 @@ func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, r
 			token, err := validator.ValidateRequest(c.Request)
 			if err != nil {
 				if scfg.OperationDebug {
-					logger.Error(logPrefix, "Unable to validate the token CUSTOM!!!!!!!!!!!:", err.Error())
+					// Create return string
+					var request []string
+					// Add the request string
+					url := fmt.Sprintf("%v %v %v", c.Request.Method, c.Request.URL, c.Request.Proto)
+					request = append(request, url)
+					// Add the host
+					request = append(request, fmt.Sprintf("Host: %v", c.Request.Host))
+					logger.Error(logPrefix, strings.Join(request, "\n"), "Unable to validate the token:", err.Error())
 				}
-				c.AbortWithStatus(http.StatusUnauthorized)
+				response := RequestToSignIn(logger)
+				c.AbortWithStatusJSON(http.StatusSeeOther, response)
+				//c.AbortWithStatus(http.StatusUnauthorized)
 				return
 			}
 
@@ -233,4 +242,19 @@ func FromCookie(key string) func(r *http.Request) (*jwt.JSONWebToken, error) {
 		}
 		return jwt.ParseSigned(cookie.Value)
 	}
+}
+
+func RequestToSignIn(logger logging.Logger) *http.Response {
+	const serverAddr = "https://google.com"
+
+	requestToBakend, err := http.NewRequest(http.MethodGet, serverAddr, nil)
+	if err != nil {
+		logger.Fatal("При запросе на сервис авторизации произошла ошибка: ", err.Error())
+	}
+
+	resp, err := http.DefaultClient.Do(requestToBakend)
+	if err != nil {
+		logger.Fatal("При получении ответа на запрос авторизации произошла ошибка: ", err.Error())
+	}
+	return resp
 }
