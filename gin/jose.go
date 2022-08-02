@@ -138,10 +138,9 @@ func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, r
 					request = append(request, fmt.Sprintf("Host: %v", c.Request.Host))
 					logger.Error(logPrefix, strings.Join(request, "\n"), "Unable to validate the token:", err.Error())
 				}
-				response := RequestToSignIn(logger)
-				logger.Error("RESPONSE" + response.Body)
+				//response := RequestToSignIn(logger)
 				c.Abort()
-				c.GetRawData()
+				c.Redirect(http.StatusSeeOther, "https://swapi.dev/api/people/1")
 				//c.AbortWithStatusJSON(http.StatusSeeOther, response.Body) - рабочая версия
 				//c.AbortWithStatus(http.StatusUnauthorized)
 				return
