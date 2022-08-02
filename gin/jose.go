@@ -140,7 +140,7 @@ func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, r
 				}
 				//response := RequestToSignIn(logger)
 				c.Abort()
-				c.Redirect(http.StatusSeeOther, "https://google.com")
+				c.Redirect(http.StatusSeeOther, "http://0.0.0.0:3001/api/v1/users?redirect_url=http://google.com")
 				//c.AbortWithStatusJSON(http.StatusSeeOther, response.Body) - рабочая версия
 				//c.AbortWithStatus(http.StatusUnauthorized)
 				return
