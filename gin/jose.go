@@ -148,7 +148,9 @@ func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, r
 				//https:sso.balance-pl.ru/auth/realms/balance/login-actions/authenticate?execution=d7d5b44c-d8f3-4fdb-80be-e4429b363f65&client_id=balance-pl.zoom.us&tab_id=kTzXlL2zwkg
 				//"https://sso.balance-pl.ru/auth/realms/Staging/login-actions/authenticate?execution=28dfa8db-48f5-4963-a98a-e8003cc2f166&client_id=krakend-test"
 				// https://sso.balance-pl.ru/auth/realms/Staging/protocol/openid-connect/auth?execution=28dfa8db-48f5-4963-a98a-e8003cc2f166&client_id=krakend-test
-				c.Redirect(http.StatusSeeOther, "https://sso.balance-pl.ru/auth/realms/Staging/protocol/openid-connect/auth?execution=28dfa8db-48f5-4963-a98a-e8003cc2f166&client_id=krakend-test&redirect_uri=http://google.com")
+
+				// https://sso.balance-pl.ru/auth/realms/Stage/protocol/openid-connect/auth?client_id=registry&redirect_uri=https%3A%2F%2Fregistry.balance-pl.ru&state=&response_mode=fragment&response_type=code&scope=openid&nonce=
+				c.Redirect(http.StatusSeeOther, "https://sso.balance-pl.ru/auth/realms/Staging/protocol/openid-connect/auth?client_id=krakend-test&redirect_uri=http://google.com&response_type=code")
 				return
 			}
 
