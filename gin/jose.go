@@ -70,7 +70,7 @@ func TokenSigner(hf ginlura.HandlerFactory, logger logging.Logger) ginlura.Handl
 
 func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, rejecterF krakendjose.RejecterFactory) ginlura.HandlerFactory {
 	return func(cfg *config.EndpointConfig, prxy proxy.Proxy) gin.HandlerFunc {
-		logPrefix := "[ENDPOINT: " + cfg.Endpoint + "METHOD: " + cfg.Method + "][JWTValidator]"
+		logPrefix := "[ENDPOINT: " + cfg.Endpoint + "][JWTValidator]"
 		if rejecterF == nil {
 			rejecterF = new(krakendjose.NopRejecterFactory)
 		}
@@ -138,11 +138,16 @@ func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, r
 					request = append(request, fmt.Sprintf("Host: %v", c.Request.Host))
 					logger.Error(logPrefix, strings.Join(request, "\n"), "Unable to validate the token:", err.Error())
 				}
-				//response := RequestToSignIn(logger)
+				// c.Request.Method => GET
+				// c.Request.URL => /v1/new-1657734259452
+				// c.Request.Proto => HTTP/1.1
+				// c.Request.Host => localhost:8080
+
 				c.Abort()
-				c.Redirect(http.StatusSeeOther, "http://0.0.0.0:3001/api/v1/users?redirect_url=http://google.com")
-				//c.AbortWithStatusJSON(http.StatusSeeOther, response.Body) - рабочая версия
-				//c.AbortWithStatus(http.StatusUnauthorized)
+				// realm: staging clientID: krakend-test secret: 28dfa8db-48f5-4963-a98a-e8003cc2f166 redirect URL: http://localhost:8080/v1/new-1657734259452
+				//https:sso.balance-pl.ru/auth/realms/balance/login-actions/authenticate?execution=d7d5b44c-d8f3-4fdb-80be-e4429b363f65&client_id=balance-pl.zoom.us&tab_id=kTzXlL2zwkg
+				//"https://sso.balance-pl.ru/auth/realms/Staging/login-actions/authenticate?execution=28dfa8db-48f5-4963-a98a-e8003cc2f166&client_id=krakend-test"
+				c.Redirect(http.StatusSeeOther, "https://sso.balance-pl.ru/auth/realms/Staging/login-actions/authenticate?execution=28dfa8db-48f5-4963-a98a-e8003cc2f166&client_id=krakend-test?redirect_url=http://google.com")
 				return
 			}
 
