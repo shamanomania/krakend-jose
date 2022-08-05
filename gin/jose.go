@@ -141,7 +141,7 @@ func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, r
 				// clientID: krakend-test
 				// secret: 28dfa8db-48f5-4963-a98a-e8003cc2f166
 				// redirect URL: http://localhost:8080/v1/new-1657734259452
-				c.Redirect(http.StatusSeeOther, "https://sso.balance-pl.ru/auth/realms/Staging/protocol/openid-connect/auth?client_id=krakend-test&redirect_uri=http://localhost:8080/v1/new-1657734259452&response_type=token")
+				c.Redirect(http.StatusSeeOther, "https://sso.balance-pl.ru/auth/realms/Staging/protocol/openid-connect/auth?client_id=krakend-test&redirect_uri=http://localhost:8080/v1/new-1657734259453&response_type=token")
 				// в ответе код
 
 				// Что реализовано на данный момент и текущая проблема:
