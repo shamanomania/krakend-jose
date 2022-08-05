@@ -129,14 +129,7 @@ func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, r
 			token, err := validator.ValidateRequest(c.Request)
 			if err != nil {
 				if scfg.OperationDebug {
-					// Create return string
-					var request []string
-					// Add the request string
-					url := fmt.Sprintf("%v %v %v", c.Request.Method, c.Request.URL, c.Request.Proto)
-					request = append(request, url)
-					// Add the host
-					request = append(request, fmt.Sprintf("Host: %v", c.Request.Host))
-					logger.Error(logPrefix, strings.Join(request, "\n"), "Unable to validate the token:", err.Error())
+					logger.Error(logPrefix, "Unable to validate the token:", err.Error())
 				}
 				// c.Request.Method => GET
 				// c.Request.URL => /v1/new-1657734259452
@@ -144,13 +137,37 @@ func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, r
 				// c.Request.Host => localhost:8080
 
 				c.Abort()
-				// realm: staging clientID: krakend-test secret: 28dfa8db-48f5-4963-a98a-e8003cc2f166 redirect URL: http://localhost:8080/v1/new-1657734259452
-				//https:sso.balance-pl.ru/auth/realms/balance/login-actions/authenticate?execution=d7d5b44c-d8f3-4fdb-80be-e4429b363f65&client_id=balance-pl.zoom.us&tab_id=kTzXlL2zwkg
-				//"https://sso.balance-pl.ru/auth/realms/Staging/login-actions/authenticate?execution=28dfa8db-48f5-4963-a98a-e8003cc2f166&client_id=krakend-test"
-				// https://sso.balance-pl.ru/auth/realms/Staging/protocol/openid-connect/auth?execution=28dfa8db-48f5-4963-a98a-e8003cc2f166&client_id=krakend-test
+				// realm: Staging
+				// clientID: krakend-test
+				// secret: 28dfa8db-48f5-4963-a98a-e8003cc2f166
+				// redirect URL: http://localhost:8080/v1/new-1657734259452
+				c.Redirect(http.StatusSeeOther, "https://sso.balance-pl.ru/auth/realms/Staging/protocol/openid-connect/auth?client_id=krakend-test&redirect_uri=http://localhost:8080/v1/new-1657734259452&response_type=token")
+				// в ответе код
 
-				// https://sso.balance-pl.ru/auth/realms/Stage/protocol/openid-connect/auth?client_id=registry&redirect_uri=https%3A%2F%2Fregistry.balance-pl.ru&state=&response_mode=fragment&response_type=code&scope=openid&nonce=
-				c.Redirect(http.StatusSeeOther, "https://sso.balance-pl.ru/auth/realms/Staging/protocol/openid-connect/auth?client_id=krakend-test&redirect_uri=http://google.com&response_type=code")
+				// Что реализовано на данный момент и текущая проблема:
+				// Внесены исправления в библиотеку krakend-jose во все 3 места проверки валидности/существования токена.
+				// Теперь вместе ответа 401, krakend делает редирект на страницу логина keycloak, передавая клоаке redirect_uri.
+				// Keycloak отображает страницу логина, выполняет авторизацию, делает редирект на redirect_uri
+				// но БЕЗ ТОКЕНА (зато с заголовком code, по которому через доп запрос к клоаке можно получить jwt)
+				// Проблема - отсутствие токена при редиректе из ck после ввода login/pass
+
+				// Варианты решения:
+				// 1. некий функционал на стороне keycloak, который поможет записать токен в заголовок redirect_uri
+				//	плюсы:	* скорость. самый производительный вариант
+				//			* не нужно городить каскад запросов в библиотеке krakend-jose, все необходимое в jose уже допилино
+				//  минусы: * пока не понятно можно ли вообще такое реализовать
+				//			* возможно нужно писать плагин/править используемую клоакой библиотеку на Java
+				//
+				// 2. допилить krakend-jose, логика такая:
+				//	запрос на /krakend-protected
+				//		-> срабатывает валидатор jwt (любая ошибка о токене)
+				//		-> редирект на login page, пользователь авторизуется
+				//		-> keycloak делает редирект на /krakend-protected без токена, но с заголовком code (Authorization Code в терминалогии OIDC) с помощью которого можно получить jwt
+				//		(code=c081f6ca-ae87-40b6-8138-5afd4162d181.f109bb89-cd34-4374-b084-c3c1cf2c8a0b.1dc15d06-d8b9-4f0f-a042-727eaa6b98f7)
+				//		-> т.к. мы без токена, то проваливаемся в тот же валидатор jwt, выполняем доп логику по условию наличия заголовка code:
+				//		-> запрос на выгрузку токена по code
+				// 		-> запрос на /krakend-protected с jwt
+				// 		-> валидатор jwt пускает нас на защищенный ресурс
 				return
 			}
 
