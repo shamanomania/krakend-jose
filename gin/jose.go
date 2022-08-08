@@ -142,9 +142,8 @@ func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, r
 				var httpCode int
 				var redirectUri string
 
-				if code, ok := c.Request.Form["code"]; ok {
-					logger.Error("c.Request.Form[code]: ", c.Request.Form["code"])
-
+				logger.Error("Пытаемся зафетчить auth code:", c.Request.URL.Query()["code"])
+				if code, ok := c.Request.URL.Query()["code"]; ok {
 					url := "https://sso.balance-pl.ru/auth/realms/Staging/protocol/openid-connect/token"
 					payload := strings.NewReader(
 						"grant_type=authorization_code&" +
