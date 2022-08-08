@@ -166,7 +166,7 @@ func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, r
 
 					jwtHeader = "Bearer " + data["access_token"].(string)
 					c.Request.Header.Set("Authorization", jwtHeader)
-					httpCode = http.StatusOK
+					httpCode = http.StatusSeeOther
 					redirectUri = c.Request.Host + c.Request.URL.Path
 				} else {
 					httpCode = http.StatusSeeOther
