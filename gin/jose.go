@@ -165,9 +165,10 @@ func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, r
 					fmt.Println(data["access_token"])
 
 					jwtHeader = "Bearer " + data["access_token"].(string)
+					fmt.Println(jwtHeader)
 					c.Request.Header.Set("Authorization", jwtHeader)
 					httpCode = http.StatusSeeOther
-					redirectUri = c.Request.Host + c.Request.URL.Path
+					redirectUri = "http://" + c.Request.Host + c.Request.URL.Path
 				} else {
 					httpCode = http.StatusSeeOther
 					redirectUri = "https://sso.balance-pl.ru/auth/realms/Staging/protocol/openid-connect/auth?client_id=krakend-test&redirect_uri=http://localhost:8080/v1/new-1657734259452&response_type=code"
