@@ -2,7 +2,9 @@ package gin
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strings"
@@ -136,12 +138,49 @@ func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, r
 				// c.Request.Proto => HTTP/1.1
 				// c.Request.Host => localhost:8080
 
+				var jwtHeader string
+				var httpCode int
+				var redirectUri string
+
+				if code, ok := c.Request.Form["code"]; ok {
+					logger.Error("c.Request.Form[code]: ", c.Request.Form["code"])
+
+					url := "https://sso.balance-pl.ru/auth/realms/Staging/protocol/openid-connect/token"
+					payload := strings.NewReader(
+						"grant_type=authorization_code&" +
+							"client_id=krakend-test&" +
+							"client_secret=28dfa8db-48f5-4963-a98a-e8003cc2f166&" +
+							"code=" + code[0] + "&" +
+							"redirect_uri=http://localhost:8080/v1/new-1657734259452")
+
+					req, _ := http.NewRequest(http.MethodPost, url, payload)
+					req.Header.Add("content-type", "application/x-www-form-urlencoded")
+					res, _ := http.DefaultClient.Do(req)
+					defer res.Body.Close()
+					body, _ := ioutil.ReadAll(res.Body)
+					var data map[string]interface{}
+					err := json.Unmarshal([]byte(body), &data)
+					if err != nil {
+						panic(err)
+					}
+					fmt.Println(data["access_token"])
+
+					jwtHeader = "Bearer " + data["access_token"].(string)
+					c.Request.Header.Set("Authorization", jwtHeader)
+					httpCode = http.StatusOK
+					redirectUri = c.Request.Host + c.Request.URL.Path
+				} else {
+					httpCode = http.StatusSeeOther
+					redirectUri = "https://sso.balance-pl.ru/auth/realms/Staging/protocol/openid-connect/auth?client_id=krakend-test&redirect_uri=http://localhost:8080/v1/new-1657734259452&response_type=code"
+				}
+
 				c.Abort()
 				// realm: Staging
 				// clientID: krakend-test
 				// secret: 28dfa8db-48f5-4963-a98a-e8003cc2f166
 				// redirect URL: http://localhost:8080/v1/new-1657734259452
-				c.Redirect(http.StatusSeeOther, "https://sso.balance-pl.ru/auth/realms/Staging/protocol/openid-connect/auth?client_id=krakend-test&redirect_uri=http://localhost:8080/v1/new-1657734259453&response_type=token")
+
+				c.Redirect(httpCode, redirectUri)
 				// в ответе код
 
 				// Что реализовано на данный момент и текущая проблема:
