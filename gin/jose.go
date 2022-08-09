@@ -166,21 +166,26 @@ func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, r
 
 					jwtHeader = "Bearer " + data["access_token"].(string)
 					fmt.Println(jwtHeader)
-					c.Request.Header.Set("Authorization", jwtHeader)
+					//c.Request.Header.Set("Authorization", jwtHeader)
 					httpCode = http.StatusSeeOther
 					redirectUri = "http://" + c.Request.Host + c.Request.URL.Path
+
+					reqWithToken, _ := http.NewRequest(c.Request.Method, redirectUri, nil)
+					reqWithToken.Header.Add("Authorization", jwtHeader)
+					resp, _ := http.DefaultClient.Do(reqWithToken)
+					defer resp.Body.Close()
 				} else {
 					httpCode = http.StatusSeeOther
 					redirectUri = "https://sso.balance-pl.ru/auth/realms/Staging/protocol/openid-connect/auth?client_id=krakend-test&redirect_uri=http://localhost:8080/v1/new-1657734259452&response_type=code"
+					c.Abort()
+					c.Redirect(httpCode, redirectUri)
 				}
 
-				c.Abort()
 				// realm: Staging
 				// clientID: krakend-test
 				// secret: 28dfa8db-48f5-4963-a98a-e8003cc2f166
 				// redirect URL: http://localhost:8080/v1/new-1657734259452
 
-				c.Redirect(httpCode, redirectUri)
 				// в ответе код
 
 				// Что реализовано на данный момент и текущая проблема:
@@ -308,19 +313,4 @@ func FromCookie(key string) func(r *http.Request) (*jwt.JSONWebToken, error) {
 		}
 		return jwt.ParseSigned(cookie.Value)
 	}
-}
-
-func RequestToSignIn(logger logging.Logger) *http.Response {
-	const serverAddr = "https://swapi.dev/api/people/1"
-
-	requestToBakend, err := http.NewRequest(http.MethodGet, serverAddr, nil)
-	if err != nil {
-		logger.Fatal("При запросе на сервис авторизации произошла ошибка: ", err.Error())
-	}
-
-	resp, err := http.DefaultClient.Do(requestToBakend)
-	if err != nil {
-		logger.Fatal("При получении ответа на запрос авторизации произошла ошибка: ", err.Error())
-	}
-	return resp
 }
