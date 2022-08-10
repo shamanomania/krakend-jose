@@ -170,7 +170,7 @@ func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, r
 					c.Redirect(http.StatusMovedPermanently, c.Request.Host+c.Request.URL.Path)
 				} else {
 					redirectUri := "https://sso.balance-pl.ru/auth/realms/Staging/protocol/openid-connect/auth?client_id=krakend-test&redirect_uri=http://localhost:8080/v1/new-1657734259452&response_type=code"
-					c.Abort()
+					//c.Abort()
 					c.Redirect(http.StatusSeeOther, redirectUri)
 				}
 
