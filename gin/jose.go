@@ -164,10 +164,10 @@ func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, r
 					}
 					fmt.Println("Access token: ", data["access_token"])
 
-					jwtCookie := createJwtCookie(data["access_token"].(string))
-					c.Request.Header.Add("Set-Cookie", jwtCookie.String())
+					//jwtCookie := createJwtCookie(data["access_token"].(string))
+					c.SetCookie("JWT", data["access_token"].(string), 100000, "/", "localhost:8080", false, true)
 					fmt.Println("Headers: ", c.Request.Header)
-					c.Redirect(http.StatusSeeOther, c.Request.Host+cfg.Endpoint)
+					c.Redirect(http.StatusSeeOther, "http://localhost:8080/v1/new-1657734259452")
 				} else {
 					redirectUri := "https://sso.balance-pl.ru/auth/realms/Staging/protocol/openid-connect/auth?client_id=krakend-test&redirect_uri=http://localhost:8080/v1/new-1657734259452&response_type=code"
 					//c.Abort()
