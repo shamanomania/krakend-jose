@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	auth0 "github.com/auth0-community/go-auth0"
 	"github.com/gin-gonic/gin"
@@ -138,8 +139,8 @@ func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, r
 				// c.Request.Proto => HTTP/1.1
 				// c.Request.Host => localhost:8080
 
-				var jwtHeader string
-				var httpCode int
+				//var jwtHeader string
+				//var httpCode int
 				var redirectUri string
 
 				logger.Error("Пытаемся зафетчить auth code:", c.Request.URL.Query()["code"])
@@ -164,21 +165,24 @@ func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, r
 					}
 					fmt.Println(data["access_token"])
 
-					jwtHeader = "Bearer " + data["access_token"].(string)
-					fmt.Println(jwtHeader)
+					//jwtHeader = "Bearer " + data["access_token"].(string)
+					//fmt.Println(jwtHeader)
 					//c.Request.Header.Set("Authorization", jwtHeader)
-					httpCode = http.StatusSeeOther
+					/*httpCode = http.StatusSeeOther
 					redirectUri = "http://" + c.Request.Host + c.Request.URL.Path
 
 					reqWithToken, _ := http.NewRequest(c.Request.Method, redirectUri, nil)
 					reqWithToken.Header.Add("Authorization", jwtHeader)
 					resp, _ := http.DefaultClient.Do(reqWithToken)
-					defer resp.Body.Close()
+					defer resp.Body.Close()*/
+
+					jwtCookie := createJwtCookie(data["access_token"].(string))
+					c.Request.Header.Add("Set-Cookie", jwtCookie.String())
+					c.Redirect(http.StatusSeeOther, c.Request.Host+c.Request.URL.Path)
 				} else {
-					httpCode = http.StatusSeeOther
 					redirectUri = "https://sso.balance-pl.ru/auth/realms/Staging/protocol/openid-connect/auth?client_id=krakend-test&redirect_uri=http://localhost:8080/v1/new-1657734259452&response_type=code"
 					c.Abort()
-					c.Redirect(httpCode, redirectUri)
+					c.Redirect(http.StatusSeeOther, redirectUri)
 				}
 
 				// realm: Staging
@@ -313,4 +317,15 @@ func FromCookie(key string) func(r *http.Request) (*jwt.JSONWebToken, error) {
 		}
 		return jwt.ParseSigned(cookie.Value)
 	}
+}
+
+func createJwtCookie(token string) http.Cookie {
+	cookie := http.Cookie{}
+	cookie.Name = "JWT"
+	cookie.Expires = time.Now().UTC().Add(24 * 365 * time.Hour)
+	cookie.HttpOnly = true
+	cookie.Path = "/"
+	cookie.Value = token
+	cookie.Secure = false // использовать только при HTTPS-сессии, позднее поменять на true
+	return cookie
 }
