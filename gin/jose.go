@@ -141,9 +141,9 @@ func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, r
 
 				//var jwtHeader string
 				//var httpCode int
-				var redirectUri string
+				//var redirectUri string
 
-				logger.Error("Пытаемся зафетчить auth code:", c.Request.URL.Query()["code"])
+				logger.Error("auth code присутсвует:", c.Request.URL.Query()["code"][1], "auth code: ", c.Request.URL.Query()["code"][0])
 				if code, ok := c.Request.URL.Query()["code"]; ok {
 					url := "https://sso.balance-pl.ru/auth/realms/Staging/protocol/openid-connect/token"
 					payload := strings.NewReader(
@@ -152,7 +152,6 @@ func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, r
 							"client_secret=28dfa8db-48f5-4963-a98a-e8003cc2f166&" +
 							"code=" + code[0] + "&" +
 							"redirect_uri=http://localhost:8080/v1/new-1657734259452")
-
 					req, _ := http.NewRequest(http.MethodPost, url, payload)
 					req.Header.Add("content-type", "application/x-www-form-urlencoded")
 					res, _ := http.DefaultClient.Do(req)
@@ -163,24 +162,13 @@ func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, r
 					if err != nil {
 						panic(err)
 					}
-					fmt.Println(data["access_token"])
-
-					//jwtHeader = "Bearer " + data["access_token"].(string)
-					//fmt.Println(jwtHeader)
-					//c.Request.Header.Set("Authorization", jwtHeader)
-					/*httpCode = http.StatusSeeOther
-					redirectUri = "http://" + c.Request.Host + c.Request.URL.Path
-
-					reqWithToken, _ := http.NewRequest(c.Request.Method, redirectUri, nil)
-					reqWithToken.Header.Add("Authorization", jwtHeader)
-					resp, _ := http.DefaultClient.Do(reqWithToken)
-					defer resp.Body.Close()*/
+					fmt.Println("Access token: ", data["access_token"])
 
 					jwtCookie := createJwtCookie(data["access_token"].(string))
 					c.Request.Header.Add("Set-Cookie", jwtCookie.String())
-					c.Redirect(http.StatusSeeOther, c.Request.Host+c.Request.URL.Path)
+					c.Redirect(http.StatusUseProxy, c.Request.Host+c.Request.URL.Path)
 				} else {
-					redirectUri = "https://sso.balance-pl.ru/auth/realms/Staging/protocol/openid-connect/auth?client_id=krakend-test&redirect_uri=http://localhost:8080/v1/new-1657734259452&response_type=code"
+					redirectUri := "https://sso.balance-pl.ru/auth/realms/Staging/protocol/openid-connect/auth?client_id=krakend-test&redirect_uri=http://localhost:8080/v1/new-1657734259452&response_type=code"
 					c.Abort()
 					c.Redirect(http.StatusSeeOther, redirectUri)
 				}
