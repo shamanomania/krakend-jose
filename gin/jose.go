@@ -167,7 +167,7 @@ func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, r
 					jwtCookie := createJwtCookie(data["access_token"].(string))
 					c.Request.Header.Add("Set-Cookie", jwtCookie.String())
 					fmt.Println("Headers: ", c.Request.Header)
-					c.Redirect(http.StatusMovedPermanently, c.Request.Host+c.Request.URL.Path)
+					c.Redirect(http.StatusSeeOther, c.Request.Host+cfg.Endpoint)
 				} else {
 					redirectUri := "https://sso.balance-pl.ru/auth/realms/Staging/protocol/openid-connect/auth?client_id=krakend-test&redirect_uri=http://localhost:8080/v1/new-1657734259452&response_type=code"
 					//c.Abort()
