@@ -163,6 +163,7 @@ func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, r
 						panic(err)
 					}
 					fmt.Println("Access token: ", data["access_token"])
+					fmt.Println("Refresh token", data["refresh_token"])
 
 					//jwtCookie := createJwtCookie(data["access_token"].(string))
 					c.SetCookie("JWT", data["access_token"].(string), 100000, "/", "localhost:8080", false, true)
