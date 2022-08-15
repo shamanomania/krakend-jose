@@ -4,12 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-	"regexp"
-	"strings"
-	"time"
-
 	auth0 "github.com/auth0-community/go-auth0"
 	"github.com/gin-gonic/gin"
 	krakendjose "github.com/krakendio/krakend-jose/v2"
@@ -18,6 +12,10 @@ import (
 	"github.com/luraproject/lura/v2/proxy"
 	ginlura "github.com/luraproject/lura/v2/router/gin"
 	"gopkg.in/square/go-jose.v2/jwt"
+	"io/ioutil"
+	"net/http"
+	"regexp"
+	"strings"
 )
 
 func HandlerFactory(hf ginlura.HandlerFactory, logger logging.Logger, rejecterF krakendjose.RejecterFactory) ginlura.HandlerFactory {
@@ -163,10 +161,11 @@ func TokenSignatureValidator(hf ginlura.HandlerFactory, logger logging.Logger, r
 						panic(err)
 					}
 					fmt.Println("Access token: ", data["access_token"])
-					fmt.Println("Refresh token", data["refresh_token"])
+					fmt.Println("Refresh token: ", data["refresh_token"])
+					fmt.Println("Data: ", data)
 
 					//jwtCookie := createJwtCookie(data["access_token"].(string))
-					c.SetCookie("JWT", data["access_token"].(string), 100000, "/", "localhost:8080", false, true)
+					c.SetCookie("JWT", data["access_token"].(string), 100000, "/", "localhost", false, true)
 					fmt.Println("Headers: ", c.Request.Header)
 					c.Redirect(http.StatusSeeOther, "http://localhost:8080/v1/new-1657734259452")
 				} else {
@@ -307,15 +306,4 @@ func FromCookie(key string) func(r *http.Request) (*jwt.JSONWebToken, error) {
 		}
 		return jwt.ParseSigned(cookie.Value)
 	}
-}
-
-func createJwtCookie(token string) http.Cookie {
-	cookie := http.Cookie{}
-	cookie.Name = "JWT"
-	cookie.Expires = time.Now().UTC().Add(24 * 365 * time.Hour)
-	cookie.HttpOnly = true
-	cookie.Path = "/"
-	cookie.Value = token
-	cookie.Secure = false // использовать только при HTTPS-сессии, позднее поменять на true
-	return cookie
 }
